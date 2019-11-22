@@ -11,6 +11,10 @@ const jsonParser = bodyParser.json()
 
 const users = []
 
+const messages = [
+  { body: 'test message', sentBy: 'test user' }
+]
+
 app.post('/login', jsonParser, (req, res) => {
   const user = {
     login: req.body.login
@@ -18,6 +22,10 @@ app.post('/login', jsonParser, (req, res) => {
   users.push(user);
   console.log(`User ${user.login} joined`);
   return res.json(user);
+})
+
+app.get('/messages', (req, res) => {
+  return res.json(messages)
 })
 
 app.get('/', (req, res) => res.send('Hello World!'))
