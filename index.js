@@ -24,6 +24,15 @@ app.post('/login', jsonParser, (req, res) => {
   return res.json(user);
 })
 
+app.post('/sendMessage', jsonParser, (req, res) => {
+  const message = {
+    body: req.body.message,
+    sentBy: req.body.login
+  }
+  messages.push(message)
+  return res.json(message);
+})
+
 app.get('/messages', (req, res) => {
   return res.json(messages)
 })
