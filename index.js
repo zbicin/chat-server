@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const etag = require('etag')
 const readline = require('readline');
+const https = require('https')
 
 const defaultPort = 3000;
 
@@ -48,7 +49,19 @@ function runServer(port) {
       sentBy: req.body.login
     }
     messages.push(message)
-    return res.json(message);
+
+    if (message.body === '/joke') {
+      getJoke((joke) => {
+        const jokeMessage = {
+          body: joke,
+          sentBy: 'Joke Bot'
+        };
+        messages.push(jokeMessage);
+        return res.json(message);
+      });
+    } else {
+      return res.json(message);
+    }
   })
 
   app.get('/messages', (req, res) => {
@@ -65,4 +78,23 @@ function runServer(port) {
 
 
   app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+}
+
+function getJoke(callback) {
+  https.get({
+    hostname: 'icanhazdadjoke.com',
+    headers: { Accept: 'text/plain' }
+  }, (res) => {
+    if (res.statusCode !== 200) {
+      callback('no joke');
+      return;
+    }
+    let joke = '';
+    res.on('data', (chunk) => {
+      joke += chunk;
+    });
+    res.on('end', () => {
+      callback(joke);
+    });
+  });
 }
