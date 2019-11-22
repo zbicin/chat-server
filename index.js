@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const etag = require('etag')
 
 const app = express()
 const port = 3000
@@ -34,7 +35,13 @@ app.post('/sendMessage', jsonParser, (req, res) => {
 })
 
 app.get('/messages', (req, res) => {
+  res.setHeader('ETag', etag(JSON.stringify(messages)));
   return res.json(messages)
+})
+
+app.head('/messages', (req, res) => {
+  res.setHeader('ETag', etag(JSON.stringify(messages)));
+  res.end();
 })
 
 app.get('/', (req, res) => res.send('Hello World!'))
