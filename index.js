@@ -5,8 +5,10 @@ const etag = require('etag')
 const readline = require('readline');
 const https = require('https')
 const child_process = require('child_process');
+const fs = require('fs');
 
 const defaultPort = 3000;
+const messagesFileName = 'messages.txt';
 
 if (process.argv.includes('--prompt')) {
   const rl = readline.createInterface(process.stdin, process.stdout);
@@ -31,9 +33,10 @@ function runServer(port) {
 
   const users = []
 
-  const messages = [
-    { body: 'test message', sentBy: 'test user' }
-  ]
+  const messages = []
+  restoreMessages((restoredMessages) => {
+    messages.push(...restoredMessages);
+  });
 
   app.post('/login', jsonParser, (req, res) => {
     const user = {
@@ -49,20 +52,33 @@ function runServer(port) {
       body: req.body.message,
       sentBy: req.body.login
     }
-    messages.push(message)
+    storeMessage(message, (err) => {
+      if (err) {
+        res.statusCode(500);
+        res.json(err);
+        return;
+      }
 
-    if (message.body === '/joke') {
-      getJoke((joke) => {
-        const jokeMessage = {
-          body: joke,
-          sentBy: 'Joke Bot'
-        };
-        messages.push(jokeMessage);
+      if (message.body === '/joke') {
+        getJoke((joke) => {
+          const jokeMessage = {
+            body: joke,
+            sentBy: 'Joke Bot'
+          };
+
+          storeMessage(jokeMessage, (err2) => {
+            if (err2) {
+              res.statusCode(500);
+              res.json(err2);
+              return;
+            }
+            return res.json(message);
+          });
+        });
+      } else {
         return res.json(message);
-      });
-    } else {
-      return res.json(message);
-    }
+      }
+    });
   })
 
   app.get('/whoami', (req, res) => {
@@ -90,6 +106,21 @@ function runServer(port) {
 
 
   app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+
+  function restoreMessages(callback) {
+    fs.readFile(messagesFileName, {}, (err, data) => {
+      if (err) {
+        callback([]);
+      } else {
+        callback(JSON.parse(data.toString()));
+      }
+    });
+  }
+
+  function storeMessage(message, callback) {
+    messages.push(message);
+    fs.writeFile(messagesFileName, JSON.stringify(messages, null, 2), callback);
+  }
 }
 
 function getJoke(callback) {
