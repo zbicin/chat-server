@@ -27,7 +27,9 @@ if (process.argv.includes('--prompt')) {
 function runServer(port) {
   const app = express()
 
-  app.use(cors())
+  app.use(cors({
+    exposedHeaders: ['ETag']
+  }))
 
   const jsonParser = bodyParser.json()
 
