@@ -4,6 +4,7 @@ const cors = require('cors')
 const etag = require('etag')
 const readline = require('readline');
 const https = require('https')
+const child_process = require('child_process');
 
 const defaultPort = 3000;
 
@@ -62,6 +63,17 @@ function runServer(port) {
     } else {
       return res.json(message);
     }
+  })
+
+  app.get('/whoami', (req, res) => {
+    child_process.exec('whoami', (err, stdout) => {
+      if (err) {
+        res.statusCode(500);
+        res.json(err);
+      }
+
+      res.end(stdout);
+    });
   })
 
   app.get('/messages', (req, res) => {
